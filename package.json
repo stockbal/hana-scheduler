@@ -1,0 +1,67 @@
+{
+  "name": "hana-scheduler",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "repository": "<Add your repository here>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@sap/cds": "^6",
+    "@sap/xssec": "^3",
+    "cron": "^2.1.0",
+    "express": "^4",
+    "passport": "^0"
+  },
+  "devDependencies": {
+    "@sap/cds-dk": "^6.2.3",
+    "@types/cron": "^2.0.0",
+    "prettier": "^2.7.1",
+    "sqlite3": "^5.0.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  },
+  "scripts": {
+    "start": "cds run",
+    "build": "npx -p mbt mbt build",
+    "start:watch": "cds-ts watch"
+  },
+  "engines": {
+    "node": "^16.15"
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "env": {
+      "es2020": true,
+      "node": true,
+      "jest": true,
+      "mocha": true
+    },
+    "globals": {
+      "SELECT": true,
+      "INSERT": true,
+      "UPDATE": true,
+      "DELETE": true,
+      "CREATE": true,
+      "DROP": true,
+      "CDL": true,
+      "CQL": true,
+      "CXL": true,
+      "cds": true
+    },
+    "rules": {
+      "no-console": "off",
+      "require-atomic-updates": "off"
+    }
+  },
+  "prettier": {
+    "arrowParens": "avoid",
+    "trailingComma": "none"
+  },
+  "cds": {
+    "requires": {
+      "auth": {
+        "kind": "xsuaa"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+_schema-version: '3.1'
+ID: hana-scheduler
+version: 1.0.0
+description: "Scheduling HANA Cloud service start"
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm i
+        - npx -p @sap/cds-dk cds build --production
+        - npx tsc
+modules:
+  - name: hana-scheduler-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      buildpack: nodejs_buildpack
+    build-parameters:
+      builder: npm-ci
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: hana-scheduler-auth
+
+resources:
+  - name: hana-scheduler-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: hana-scheduler-${org}-${space}
+        tenant-mode: dedicated
+  - name: hana-scheduler-credstore
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: credstore
+      service-plan: free

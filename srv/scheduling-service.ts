@@ -1,32 +1,39 @@
 import { ApplicationService } from "@sap/cds";
 import { CronJob } from "cron";
+import { DateTime } from "luxon";
+import { cfApi, HanaStatus } from "./lib/cf-api";
 
 class SchedulingService extends ApplicationService {
-  private _jobs = new Set<CronJob>();
-
   override async init() {
-    this.on("startJob", async req => {
-      const newJob = new CronJob(
-        "20 * * * * *",
-        this._executeJob.bind(this, req.data.json)
-      );
-      this._jobs.add(newJob);
-      newJob.start();
-    });
+    const newJob = new CronJob(
+      "* * 7 * * *",
+      this._checkAndStartHana.bind(this)
+    );
+    newJob.start();
 
-    this.on("stopAllJobs", req => {
-      for (const job of this._jobs) {
-        job.stop();
-      }
-      this._jobs.clear();
-    });
+    if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
+      this._checkAndStartHana();
+    }
 
     await super.init();
   }
 
-  private _executeJob(config: string) {
-    console.log("Scheduled Job", config);
+  /**
+   * Starts the bound HANA service, if not already started
+   */
+  private async _checkAndStartHana() {
+    console.log("> Scheduled check of HANA instance...");
+    const hanaState = await cfApi.getHanaStatus();
+    if (hanaState === HanaStatus.Stopped) {
+      if (await cfApi.startHana()) {
+        console.log("HANA is starting");
+      }
+    } else if (hanaState === HanaStatus.Running) {
+      console.log("HANA is already running...");
+    } else {
+      console.log("HANA is starting...");
+    }
   }
 }
 
-module.exports = SchedulingService;
+export { SchedulingService };

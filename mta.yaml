@@ -1,4 +1,4 @@
-_schema-version: '3.1'
+_schema-version: "3.1"
 ID: hana-scheduler
 version: 1.0.0
 description: "Scheduling HANA Cloud service start"
@@ -19,12 +19,19 @@ modules:
       buildpack: nodejs_buildpack
     build-parameters:
       builder: npm-ci
+      ignore:
+        - node_modules/
+        - "*.db"
+        - srv/__tests__/
+        - srv/*.ts
     provides:
       - name: srv-api # required by consumers of CAP services (e.g. approuter)
         properties:
           srv-url: ${default-url}
     requires:
       - name: hana-scheduler-auth
+      - name: hana-scheduler-hana
+      - name: hana-scheduler-credstore
 
 resources:
   - name: hana-scheduler-auth
@@ -41,3 +48,7 @@ resources:
     parameters:
       service: credstore
       service-plan: free
+  - name: hana-scheduler-hana
+    type: org.cloudfoundry.existing-service
+    parameters:
+      service-name: hana

@@ -6,8 +6,11 @@ import { cfApi, HanaStatus } from "./lib/cf-api";
 class SchedulingService extends ApplicationService {
   override async init() {
     const newJob = new CronJob(
-      "* * 7 * * *",
-      this._checkAndStartHana.bind(this)
+      "0 0 7 * * *",
+      this._checkAndStartHana.bind(this),
+      null,
+      false,
+      "Europe/Berlin"
     );
     newJob.start();
 

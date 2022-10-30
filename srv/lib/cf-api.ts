@@ -4,9 +4,9 @@ import { envAccess } from "./env";
 
 const serviceInstancesEndpoint = "/v3/service_instances";
 
-export enum HanaStatus {
+export enum ServiceStatus {
   Running,
-  Starting,
+  Indeterminate,
   Stopped
 }
 
@@ -50,7 +50,7 @@ class CloudFoundryApi {
     this._token = tokenResp.data.access_token;
   }
 
-  async getHanaStatus(): Promise<HanaStatus> {
+  async getHanaStatus(): Promise<ServiceStatus> {
     await this._retrieveToken();
     try {
       const hanaSrvParamsResp = await axios.get(
@@ -62,12 +62,13 @@ class CloudFoundryApi {
         }
       );
       return !hanaSrvParamsResp.data.data.serviceStopped
-        ? HanaStatus.Running
-        : HanaStatus.Stopped;
+        ? ServiceStatus.Running
+        : ServiceStatus.Stopped;
     } catch (error) {
-      console.error((error as AxiosError).response?.status);
-
-      return HanaStatus.Starting;
+      if ((error as AxiosError).response?.status !== 409) {
+        console.error((error as AxiosError).response?.data);
+      }
+      return ServiceStatus.Indeterminate;
     }
   }
 
@@ -89,7 +90,7 @@ class CloudFoundryApi {
           }
         }
       );
-      return hanaSrvParamsResp.status === 200;
+      return hanaSrvParamsResp.status === 202;
     } catch (error) {
       console.error(
         "Error during starting of HANA instance!",

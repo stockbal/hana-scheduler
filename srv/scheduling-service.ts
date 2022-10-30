@@ -1,7 +1,7 @@
 import { ApplicationService } from "@sap/cds";
 import { CronJob } from "cron";
 import { DateTime } from "luxon";
-import { cfApi, HanaStatus } from "./lib/cf-api";
+import { cfApi, ServiceStatus } from "./lib/cf-api";
 
 class SchedulingService extends ApplicationService {
   override async init() {
@@ -27,14 +27,17 @@ class SchedulingService extends ApplicationService {
   private async _checkAndStartHana() {
     console.log("> Scheduled check of HANA instance...");
     const hanaState = await cfApi.getHanaStatus();
-    if (hanaState === HanaStatus.Stopped) {
-      if (await cfApi.startHana()) {
+    if (hanaState === ServiceStatus.Stopped) {
+      const isStarting = await cfApi.startHana();
+      if (isStarting) {
         console.log("HANA is starting");
+      } else {
+        console.error("Error during HANA start");
       }
-    } else if (hanaState === HanaStatus.Running) {
+    } else if (hanaState === ServiceStatus.Running) {
       console.log("HANA is already running...");
     } else {
-      console.log("HANA is starting...");
+      console.log("HANA is starting or stopping...");
     }
   }
 }

@@ -65,7 +65,12 @@ class CloudFoundryApi {
         ? ServiceStatus.Running
         : ServiceStatus.Stopped;
     } catch (error) {
-      if ((error as AxiosError).response?.status !== 409) {
+      const errorStatus = (error as AxiosError).response?.status;
+      if (errorStatus === 401) {
+        this._token = "";
+        return this.getHanaStatus();
+      }
+      if (errorStatus !== 409) {
         console.error((error as AxiosError).response?.data);
       }
       return ServiceStatus.Indeterminate;
@@ -92,6 +97,10 @@ class CloudFoundryApi {
       );
       return hanaSrvParamsResp.status === 202;
     } catch (error) {
+      if ((error as AxiosError).response?.status === 401) {
+        this._token = "";
+        return this.startHana();
+      }
       console.error(
         "Error during starting of HANA instance!",
         (error as AxiosError).response?.data

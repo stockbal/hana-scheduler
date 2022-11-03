@@ -9,12 +9,10 @@ build-parameters:
     - builder: custom
       commands:
         - npm i
-        - npx -p @sap/cds-dk cds build --production
-        - npx tsc
 modules:
   - name: hana-scheduler-srv
     type: nodejs
-    path: gen/srv
+    path: src
     parameters:
       buildpack: nodejs_buildpack
     build-parameters:
@@ -22,27 +20,12 @@ modules:
       ignore:
         - node_modules/
         - "*.db"
-        - srv/__tests__/
-        - srv/*.ts
-    provides:
-      - name: srv-api # required by consumers of CAP services (e.g. approuter)
-        properties:
-          srv-url: ${default-url}
+        - __tests__/
     requires:
-      - name: hana-scheduler-auth
       - name: hana-scheduler-hana
       - name: hana-scheduler-credstore
 
 resources:
-  - name: hana-scheduler-auth
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: xsuaa
-      service-plan: application
-      path: ./xs-security.json
-      config:
-        xsappname: hana-scheduler-${org}-${space}
-        tenant-mode: dedicated
   - name: hana-scheduler-credstore
     type: org.cloudfoundry.managed-service
     parameters:

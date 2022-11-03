@@ -1,3 +1,7 @@
+import { config } from "dotenv";
+
+config();
+
 export type CredStoreCredentials = {
   encryption: {
     client_private_key: string;

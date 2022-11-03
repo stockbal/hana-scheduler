@@ -9,7 +9,7 @@
     "module": "commonjs" /* Specify what module code is generated. */,
     "rootDir": "./" /* Specify the root folder within your source files. */,
     "baseUrl": "./",
-    "outDir": "./out" /* Specify an output folder for all emitted files. */,
+    "outDir": "./build" /* Specify an output folder for all emitted files. */,
     "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
     "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
 
@@ -18,5 +18,5 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": ["./**/*"],
-  "exclude": ["./src/**/*"]
+  "exclude": []
 }

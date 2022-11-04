@@ -1,60 +1,26 @@
-import { CronJob } from "cron";
-import { DateTime } from "luxon";
 import express from "express";
-import { cfApi, ServiceStatus } from "./lib/cf-api";
+import fs from "fs";
 
-const LOG = {
-  info: (text: string) => console.info(`[scheduler] - ${text}`),
-  warn: (text: string) => console.warn(`[scheduler] - ${text}`)
-};
-
-const newJob = new CronJob(
-  "0 0 7 * * *",
-  checkAndStartHana,
-  null,
-  false,
-  "Europe/Berlin"
-);
-newJob.start();
-
-LOG.info(`HANA Scheduler started`);
-LOG.info(
-  `Next execution on: ${newJob.nextDate().toISODate()}, ${newJob
-    .nextDate()
-    .toISOTime()}`
-);
-
-if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
-  checkAndStartHana();
-}
+import { Logger } from "./lib/log";
+import { HanaScheduler } from "./lib/scheduler";
 
 startExpressForHealthCheck();
 
-/**
- * Starts the bound HANA service, if not already started
- */
-async function checkAndStartHana() {
-  LOG.info("Scheduled check of HANA instance...");
-  const hanaState = await cfApi.getHanaStatus();
-  if (hanaState === ServiceStatus.Stopped) {
-    const isStarting = await cfApi.startHana();
-    if (isStarting) {
-      LOG.info("HANA is starting");
-    } else {
-      console.error("Error during HANA start");
-    }
-  } else if (hanaState === ServiceStatus.Running) {
-    LOG.info("HANA is already running...");
-  } else {
-    LOG.info("HANA is starting or stopping...");
-  }
+try {
+  const jobScheduleJson = fs.readFileSync(__dirname + "/jobconfig.json", {
+    encoding: "utf-8"
+  });
+  const scheduler = new HanaScheduler(jobScheduleJson);
+  scheduler.run();
+} catch (error) {
+  Logger.error(error);
 }
 
 /**
- * Although this application does not really need a web service 
- * we still have to create a standard endpoint at "/" so cloud foundry 
+ * Although this application does not really need a web service
+ * we still have to create a standard endpoint at "/" so cloud foundry
  * can perform a health check to signal the container is healthy.
- * 
+ *
  * If this is not included the app container can not start correctly
  */
 function startExpressForHealthCheck() {

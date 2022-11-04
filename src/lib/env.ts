@@ -32,14 +32,12 @@ export type VcapAppEnv = {
  */
 class EnvAccess {
   private _credstore: CredStoreEnv;
-  private _hana: HanaCloudEnv;
   private _vcapApp: VcapAppEnv;
 
   constructor() {
     const vcapServices = JSON.parse(process.env.VCAP_SERVICES as string);
 
     this._credstore = vcapServices.credstore[0];
-    this._hana = vcapServices["hana-cloud"][0];
 
     const capApplication = JSON.parse(process.env.VCAP_APPLICATION as string);
 
@@ -54,10 +52,6 @@ class EnvAccess {
 
   get credstoreEnv(): CredStoreEnv {
     return this._credstore;
-  }
-
-  get hanaEnv(): HanaCloudEnv {
-    return this._hana;
   }
 
   get vcapAppEnv(): VcapAppEnv {

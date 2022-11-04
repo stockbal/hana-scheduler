@@ -21,8 +21,8 @@ modules:
         - node_modules/
         - "*.db"
         - __tests__/
+        - ".env"
     requires:
-      - name: hana-scheduler-hana
       - name: hana-scheduler-credstore
 
 resources:
@@ -31,7 +31,3 @@ resources:
     parameters:
       service: credstore
       service-plan: free
-  - name: hana-scheduler-hana
-    type: org.cloudfoundry.existing-service
-    parameters:
-      service-name: hana

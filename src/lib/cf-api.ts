@@ -1,8 +1,14 @@
-import axios, { AxiosError } from "axios";
+import axios, { Axios, AxiosError } from "axios";
 import { credStore } from "./credstore";
 import { envAccess } from "./env";
+import { Logger } from "./log";
 
 const serviceInstancesEndpoint = "/v3/service_instances";
+
+export type ServiceInfo = {
+  status: ServiceStatus;
+  name: string;
+};
 
 export enum ServiceStatus {
   Running,
@@ -50,38 +56,59 @@ class CloudFoundryApi {
     this._token = tokenResp.data.access_token;
   }
 
-  async getHanaStatus(): Promise<ServiceStatus> {
+  async getHanaStatus(instanceGuid: string): Promise<ServiceInfo> {
     await this._retrieveToken();
+
+    const hanaInfo = {} as ServiceInfo;
+
     try {
-      const hanaSrvParamsResp = await axios.get(
-        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${envAccess.hanaEnv.instance_guid}/parameters`,
+      const hanaSrvResp = await axios.get(
+        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
         {
           headers: {
             Authorization: `Bearer ${this._token}`
           }
         }
       );
-      return !hanaSrvParamsResp.data.data.serviceStopped
+      hanaInfo.name = hanaSrvResp.data.name;
+    } catch (error) {
+      if ((error as AxiosError).response?.status === 404) {
+        throw `No HANA service instance with GUID ${instanceGuid} found`;
+      }
+    }
+    try {
+      const hanaSrvParamsResp = await axios.get(
+        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}/parameters`,
+        {
+          headers: {
+            Authorization: `Bearer ${this._token}`
+          }
+        }
+      );
+
+      hanaInfo.status = !hanaSrvParamsResp.data.data.serviceStopped
         ? ServiceStatus.Running
         : ServiceStatus.Stopped;
+      return hanaInfo;
     } catch (error) {
       const errorStatus = (error as AxiosError).response?.status;
       if (errorStatus === 401) {
         this._token = "";
-        return this.getHanaStatus();
+        return this.getHanaStatus(instanceGuid);
       }
       if (errorStatus !== 409) {
         console.error((error as AxiosError).response?.data);
       }
-      return ServiceStatus.Indeterminate;
+      hanaInfo.status = ServiceStatus.Indeterminate;
+      return hanaInfo;
     }
   }
 
-  async startHana(): Promise<boolean> {
+  async startHana(instanceGuid: string): Promise<boolean> {
     await this._retrieveToken();
     try {
       const hanaSrvParamsResp = await axios.patch(
-        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${envAccess.hanaEnv.instance_guid}`,
+        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
         {
           parameters: {
             data: {
@@ -99,7 +126,7 @@ class CloudFoundryApi {
     } catch (error) {
       if ((error as AxiosError).response?.status === 401) {
         this._token = "";
-        return this.startHana();
+        return this.startHana(instanceGuid);
       }
       console.error(
         "Error during starting of HANA instance!",

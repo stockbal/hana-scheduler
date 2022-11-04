@@ -23,6 +23,7 @@ mta_archives/
 .DS_Store
 *.orig
 *.log
+jobconfig.json
 
 *.iml
 *.flattened-pom.xml

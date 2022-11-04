@@ -17,6 +17,7 @@
     "node": "^14.18"
   },
   "scripts": {
+    "postinstall": "npx husky install",
     "build": "npx -p mbt mbt build",
     "test": "cd src && npm start",
     "gen:env": "cf de hana-scheduler-srv && ts-node util/generate-env.ts",

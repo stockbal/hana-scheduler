@@ -1,17 +1,35 @@
 import fs from "fs/promises";
+import { parse, stringify } from "envfile";
+
+const envFileName = __dirname + "/../src/.env";
 
 (async () => {
   try {
     const defaultEnv = JSON.parse(
-      (await fs.readFile(__dirname + "/../default-env.json")).toString("utf-8")
+      await fs.readFile(__dirname + "/../default-env.json", {
+        encoding: "utf-8"
+      })
     );
-    const envContent = `VCAP_APPLICATION=${JSON.stringify(
-      defaultEnv.VCAP_APPLICATION
-    )}\nVCAP_SERVICES=${JSON.stringify(defaultEnv.VCAP_SERVICES)}`;
 
-    await fs.writeFile(__dirname + "/../src/.env", envContent);
+    // read existing .env file to prevent override of other properties
+    const envContent = await readExistingEnv();
+    envContent.VCAP_APPLICATION = JSON.stringify(defaultEnv.VCAP_APPLICATION);
+    envContent.VCAP_SERVICES = JSON.stringify(defaultEnv.VCAP_SERVICES);
+
+    await fs.writeFile(envFileName, stringify(envContent));
     console.log(".env created from default-env.json");
   } catch (error) {
     console.error(error);
   }
 })();
+
+async function readExistingEnv(): Promise<Record<string, string>> {
+  try {
+    const envFileContent = await fs.readFile(envFileName, {
+      encoding: "utf-8"
+    });
+    return parse(envFileContent);
+  } catch (error) {
+    return {};
+  }
+}

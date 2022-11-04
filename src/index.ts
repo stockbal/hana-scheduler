@@ -8,14 +8,6 @@ const LOG = {
   warn: (text: string) => console.warn(`[scheduler] - ${text}`)
 };
 
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("");
-});
-
-app.listen(process.env.port || 8080);
-
 const newJob = new CronJob(
   "0 0 7 * * *",
   checkAndStartHana,
@@ -32,11 +24,11 @@ LOG.info(
     .toISOTime()}`
 );
 
-(async () => {
-  if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
-    checkAndStartHana();
-  }
-})();
+if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
+  checkAndStartHana();
+}
+
+startExpressForHealthCheck();
 
 /**
  * Starts the bound HANA service, if not already started
@@ -56,4 +48,21 @@ async function checkAndStartHana() {
   } else {
     LOG.info("HANA is starting or stopping...");
   }
+}
+
+/**
+ * Although this application does not really need a web service 
+ * we still have to create a standard endpoint at "/" so cloud foundry 
+ * can perform a health check to signal the container is healthy.
+ * 
+ * If this is not included the app container can not start correctly
+ */
+function startExpressForHealthCheck() {
+  const app = express();
+
+  app.get("/", (req, res) => {
+    res.sendStatus(200);
+  });
+
+  app.listen(process.env.port || 8080);
 }

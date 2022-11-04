@@ -1,6 +1,6 @@
 # HANA Scheduler
 
-Simple MTA project which uses the Cloud Foundry API to start one or several HANA Cloud service instance via a node cron job.  
+Simple MTA project which uses the Cloud Foundry REST API to start one or several HANA Cloud service instance via a node cron job.  
 The project is designed with the HANA Cloud Free Tier model in mind as this variant of the HANA Cloud service will be stopped **every day**.
 
 ## Used SAP BTP services
@@ -8,7 +8,7 @@ The project is designed with the HANA Cloud Free Tier model in mind as this vari
 - [SAP Credential Store](https://discovery-center.cloud.sap/serviceCatalog/credential-store?region=all)  
   *Used to store the user credentials that are needed to update the HANA Cloud service instance*
 - [SAP HANA Cloud](https://discovery-center.cloud.sap/serviceCatalog/sap-hana-cloud?region=all&tab=feature)  
-  *Currently the HANA service instance that should be started is determined via a binding that is created via the `mta.yaml` file*
+  *HANA Cloud instance that shall be started are configured via a separate `JSON` config file*
 
 ## Mechanism to schedule the HANA start
 

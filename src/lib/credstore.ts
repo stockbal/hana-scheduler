@@ -56,8 +56,8 @@ class CredStore {
       "pem",
       { alg: "RSA-OAEP-256", enc: "A256GCM" }
     );
-    const decrypt = await JWE.createDecrypt(key).decrypt(encryptedCreds);
-    const credsAsJson = decrypt.plaintext.toString();
+    const decryptedCreds = await JWE.createDecrypt(key).decrypt(encryptedCreds);
+    const credsAsJson = decryptedCreds.plaintext.toString();
     const creds = JSON.parse(credsAsJson);
 
     return {

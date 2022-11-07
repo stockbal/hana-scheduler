@@ -28,7 +28,8 @@
     "build": "npx -p mbt mbt build",
     "test": "cd src && npm start",
     "gen:env": "cf de hana-scheduler-srv && ts-node util/generate-env.ts",
-    "deploy": "cf deploy mta_archives/hana-scheduler_1.0.0.mtar --retries 0"
+    "deploy": "cf deploy mta_archives/hana-scheduler_1.0.0.mtar --retries 0",
+    "lint": "eslint . --fix"
   },
   "commitlint": {
     "extends": [
@@ -60,8 +61,7 @@
     "extends": [
       "eslint:recommended",
       "plugin:prettier/recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:@typescript-eslint/eslint-recommended"
+      "plugin:@typescript-eslint/recommended"
     ]
   }
 }

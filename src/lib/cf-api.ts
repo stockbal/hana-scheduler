@@ -1,7 +1,6 @@
-import axios, { Axios, AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { credStore } from "./credstore";
 import { envAccess } from "./env";
-import { Logger } from "./log";
 
 const serviceInstancesEndpoint = "/v3/service_instances";
 
@@ -17,13 +16,11 @@ export enum ServiceStatus {
 }
 
 class CloudFoundryApi {
-  private _token: string = "";
+  private _token = "";
 
   /**
    * Retrieves access token for request to cloud foundry REST API
-   * @param username username/email of authorized cloud foundry user
-   * @param password password of authorized cloud foundry user
-   * @returns valid token for API request
+   * @returns Promise<void>
    */
   private async _retrieveToken(): Promise<void> {
     if (this._token !== "") {

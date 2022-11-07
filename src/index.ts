@@ -6,14 +6,27 @@ import { HanaScheduler } from "./lib/scheduler";
 
 startExpressForHealthCheck();
 
-try {
-  const jobScheduleJson = fs.readFileSync(__dirname + "/jobconfig.json", {
-    encoding: "utf-8"
-  });
+// Prio 1: check env for job config
+let jobScheduleJson: string | undefined =
+  process.env.HANA_SCHEDULER_JOB_CONFIG || undefined;
+if (!jobScheduleJson) {
+  try {
+    // Prio 2: check for local json file
+    jobScheduleJson = fs.readFileSync(__dirname + "/jobconfig.json", {
+      encoding: "utf-8"
+    });
+    Logger.info("Using config from file 'jobconfig.json'");
+  } catch (error) {
+    jobScheduleJson = undefined;
+    Logger.error(error);
+  }
+} else {
+  Logger.info("Using job config from Environment");
+}
+
+if (jobScheduleJson) {
   const scheduler = new HanaScheduler(jobScheduleJson);
   scheduler.run();
-} catch (error) {
-  Logger.error(error);
 }
 
 /**

@@ -17,8 +17,15 @@ This has the advantage of no additional costs as the [SAP Job Scheduler](https:/
 
 ## Job configuration
 
-The job configuration needs to be stored in a `JSON` file at `/src/jobconfig.json`.  
-The file must have the following layout:
+The job configuration for starting HANA instances can be provided as  
+
+- a user-provided environment variable with name `HANA_SCHEDULER_JOB_CONFIG`
+
+or
+
+- a `JSON` file that can be deployed together with the application at path `/src/jobconfig.json`.
+
+In both cases the `JSON` configuration must be provided in the following format
 
 ```json
 [

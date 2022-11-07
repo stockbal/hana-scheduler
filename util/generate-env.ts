@@ -1,5 +1,6 @@
 import fs from "fs/promises";
-import { parse, stringify } from "envfile";
+import { stringify } from "envfile";
+import { parse } from "dotenv";
 
 const envFileName = __dirname + "/../src/.env";
 

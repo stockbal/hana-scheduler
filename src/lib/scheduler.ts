@@ -6,7 +6,7 @@ import { cfApi, ServiceStatus } from "./cf-api";
 
 const JobSchema = z.object({
   hanaInstanceGuid: z.string(),
-  cronTimePattern: z.string()
+  startCronTimePattern: z.string()
 });
 
 const JobsSchema = JobSchema.array().nonempty();
@@ -61,7 +61,7 @@ export class HanaScheduler {
   }
   private _createJob(jobConfig: Job) {
     const newJob = new CronJob(
-      jobConfig.cronTimePattern,
+      jobConfig.startCronTimePattern,
       this._checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
       null,
       false,

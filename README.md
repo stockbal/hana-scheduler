@@ -24,6 +24,6 @@ The file must have the following layout:
 [
   {
     "hanaInstanceGuid": "<guid of HANA cloud service instance e.g. a789a432-0aac-42e3-a0cf-5a33a6a4e585>",
-    "cronTimePattern": "<cron time pattern for the Cron job - e.g. 0 0 7 * * *>"
+    "startCronTimePattern": "<cron time pattern when to start the given HANA instance - e.g. 0 0 7 * * *>"
   }
 ]

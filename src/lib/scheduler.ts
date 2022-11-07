@@ -23,7 +23,7 @@ export class HanaScheduler {
     } catch (parseError) {
       if (parseError instanceof z.ZodError) {
         Logger.error(
-          "Error in file 'jobconfig.json'",
+          "Error in Job configuration",
           (parseError as z.ZodError).issues
         );
       }

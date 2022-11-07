@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CronJob } from "cron";
+import { CronJob, CronTime } from "cron";
 import { DateTime } from "luxon";
 import { Logger } from "./log";
 import { cfApi, ServiceStatus } from "./cf-api";
@@ -14,21 +14,27 @@ type Job = z.TypeOf<typeof JobSchema>;
 
 export class HanaScheduler {
   private _jobsConfig: Job[] | undefined;
+
   constructor(jobConfigJson: string) {
     try {
       this._jobsConfig = JobsSchema.parse(JSON.parse(jobConfigJson));
-
-      // check for duplicate entries
       this._checkForDuplicateConfigs();
-    } catch (parseError) {
-      if (parseError instanceof z.ZodError) {
+      this._validateCronTimes();
+    } catch (validationError) {
+      this._jobsConfig = undefined;
+      if (validationError instanceof z.ZodError) {
         Logger.error(
-          "Error in Job configuration",
-          (parseError as z.ZodError).issues
+          "Error in Job configuration schema",
+          (validationError as z.ZodError).issues
         );
+      } else if (validationError instanceof Error) {
+        Logger.error(`Error: ${(validationError as Error).message}`);
+      } else {
+        Logger.error(validationError);
       }
     }
   }
+
   private _checkForDuplicateConfigs() {
     if (!this._jobsConfig) {
       return;
@@ -40,12 +46,28 @@ export class HanaScheduler {
     }
 
     if (uniqueInstanceGuids.size < this._jobsConfig.length) {
-      this._jobsConfig = undefined;
-      Logger.error(
+      throw new Error(
         "There are duplicate HANA instance GUIDs in the config file"
       );
     }
   }
+
+  private _validateCronTimes() {
+    if (!this._jobsConfig) {
+      return;
+    }
+
+    this._jobsConfig.forEach((jobConfig, i) => {
+      try {
+        new CronTime(jobConfig.startCronTimePattern);
+      } catch (error) {
+        throw new Error(
+          `Invalid Job Config at index ${i}: ${(error as Error).message}`
+        );
+      }
+    });
+  }
+
   async run() {
     if (!this._jobsConfig) {
       return;
@@ -90,16 +112,18 @@ export class HanaScheduler {
       const hanaInfo = await cfApi.getHanaStatus(hanaInstanceGuid);
 
       if (scheduled) {
-        Logger.info(`Scheduled check of HANA instance '${hanaInfo.name}'...`);
+        Logger.info(`Check if HANA instance '${hanaInfo.name}' is running...`);
       } else {
-        Logger.info(`Initial check of HANA instance '${hanaInfo.name}'...`);
+        Logger.info(
+          `Initial check for running HANA instance '${hanaInfo.name}'...`
+        );
       }
       if (hanaInfo.status === ServiceStatus.Stopped) {
         const isStarting = await cfApi.startHana(hanaInstanceGuid);
         if (isStarting) {
           Logger.info(`HANA instance '${hanaInfo.name}' is starting`);
         } else {
-          console.error(`Error during start of HANA instance ${hanaInfo.name}`);
+          Logger.error(`Error during start of HANA instance ${hanaInfo.name}`);
         }
       } else if (hanaInfo.status === ServiceStatus.Running) {
         Logger.info(`HANA instance '${hanaInfo.name}' is already running`);

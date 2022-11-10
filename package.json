@@ -42,7 +42,7 @@
     "trailingComma": "none"
   },
   "lint-staged": {
-    "*.{js,ts,css,json,yml}": [
+    "*.{css,json,yml}": [
       "prettier --write"
     ],
     "*.{js,ts}": [

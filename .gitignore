@@ -28,6 +28,9 @@ jobconfig.json
 *.iml
 *.flattened-pom.xml
 
+# test resulte
+coverage/
+
 # IDEs
 # .vscode
 # .idea

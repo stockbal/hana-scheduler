@@ -1,23 +1,34 @@
 import { config } from "dotenv";
+import z, { ZodError } from "zod";
 
 config();
 
-export type CredStoreCredentials = {
-  encryption: {
-    client_private_key: string;
-  };
-  username: string;
-  password: string;
-  url: string;
-};
+const EnvSchema = z.object({
+  VCAP_SERVICES: z.object({
+    credstore: z
+      .object({
+        credentials: z.object({
+          encryption: z.object({
+            client_private_key: z.string()
+          }),
+          url: z.string(),
+          password: z.string(),
+          username: z.string()
+        })
+      })
+      .array()
+      .nonempty()
+  }),
+  VCAP_APPLICATION: z.object({
+    cf_api: z.string()
+  })
+});
 
-export type HanaCloudEnv = {
-  instance_guid: string;
-};
+export type Env = z.TypeOf<typeof EnvSchema>;
 
-export type CredStoreEnv = {
-  credentials: CredStoreCredentials;
-};
+export type CredStoreEnv = Env["VCAP_SERVICES"]["credstore"][0];
+
+export type CredStoreCredentials = CredStoreEnv["credentials"];
 
 export type VcapAppEnv = {
   /**
@@ -30,33 +41,46 @@ export type VcapAppEnv = {
 /**
  * Singleton to access relevant data from Environment
  */
-class EnvAccess {
-  private _credstore: CredStoreEnv;
-  private _vcapApp: VcapAppEnv;
+export class EnvAccess {
+  private static _credstore: CredStoreEnv | undefined;
+  private static _vcapApp: VcapAppEnv | undefined;
 
-  constructor() {
-    const vcapServices = JSON.parse(process.env.VCAP_SERVICES as string);
+  static reset() {
+    this._credstore = undefined;
+    this._vcapApp = undefined;
+  }
 
-    this._credstore = vcapServices.credstore[0];
+  static get credstoreEnv(): CredStoreEnv {
+    if (!EnvAccess._credstore) {
+      EnvAccess.init();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return EnvAccess._credstore!;
+  }
 
-    const capApplication = JSON.parse(process.env.VCAP_APPLICATION as string);
+  static get vcapAppEnv(): VcapAppEnv {
+    if (!EnvAccess._vcapApp) {
+      EnvAccess.init();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return EnvAccess._vcapApp!;
+  }
 
-    this._vcapApp = {
-      cfApiUrl: capApplication.cf_api,
-      cfApiTokenUrl: `${capApplication.cf_api.replace(
+  private static init() {
+    const envExtract = {
+      VCAP_SERVICES: JSON.parse(process.env.VCAP_SERVICES as string),
+      VCAP_APPLICATION: JSON.parse(process.env.VCAP_APPLICATION as string)
+    };
+    const env = EnvSchema.parse(envExtract);
+
+    EnvAccess._credstore = env.VCAP_SERVICES.credstore[0];
+
+    EnvAccess._vcapApp = {
+      cfApiUrl: env.VCAP_APPLICATION.cf_api,
+      cfApiTokenUrl: `${env.VCAP_APPLICATION.cf_api.replace(
         "api",
         "login"
       )}/oauth/token`
     };
   }
-
-  get credstoreEnv(): CredStoreEnv {
-    return this._credstore;
-  }
-
-  get vcapAppEnv(): VcapAppEnv {
-    return this._vcapApp;
-  }
 }
-
-export const envAccess = new EnvAccess();

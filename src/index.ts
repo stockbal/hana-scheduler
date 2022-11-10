@@ -39,7 +39,7 @@ if (jobScheduleJson) {
 function startExpressForHealthCheck() {
   const app = express();
 
-  app.get("/", (req, res) => {
+  app.get("/", (_req, res) => {
     res.sendStatus(200);
   });
 

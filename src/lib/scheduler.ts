@@ -18,8 +18,8 @@ export class HanaScheduler {
   constructor(jobConfigJson: string) {
     try {
       this._jobsConfig = JobsSchema.parse(JSON.parse(jobConfigJson));
-      this._checkForDuplicateConfigs();
-      this._validateCronTimes();
+      this.checkForDuplicateConfigs();
+      this.validateCronTimes();
     } catch (validationError) {
       this._jobsConfig = undefined;
       if (validationError instanceof z.ZodError) {
@@ -35,7 +35,7 @@ export class HanaScheduler {
     }
   }
 
-  private _checkForDuplicateConfigs() {
+  private checkForDuplicateConfigs() {
     if (!this._jobsConfig) {
       return;
     }
@@ -52,7 +52,7 @@ export class HanaScheduler {
     }
   }
 
-  private _validateCronTimes() {
+  private validateCronTimes() {
     if (!this._jobsConfig) {
       return;
     }
@@ -78,13 +78,13 @@ export class HanaScheduler {
     );
 
     for (const jobConfig of this._jobsConfig) {
-      this._createJob(jobConfig);
+      this.createJob(jobConfig);
     }
   }
-  private _createJob(jobConfig: Job) {
+  private createJob(jobConfig: Job) {
     const newJob = new CronJob(
       jobConfig.startCronTimePattern,
-      this._checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
+      this.checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
       null,
       false,
       "Europe/Berlin"
@@ -92,7 +92,7 @@ export class HanaScheduler {
     newJob.start();
 
     if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
-      this._checkAndStartHana(jobConfig.hanaInstanceGuid, false);
+      this.checkAndStartHana(jobConfig.hanaInstanceGuid, false);
     }
 
     Logger.info(
@@ -104,7 +104,7 @@ export class HanaScheduler {
   /**
    * Starts a given HANA service, if not already started
    */
-  private async _checkAndStartHana(
+  private async checkAndStartHana(
     hanaInstanceGuid: string,
     scheduled: boolean
   ) {

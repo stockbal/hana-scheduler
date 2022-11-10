@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
-import { credStore } from "./credstore";
-import { envAccess } from "./env";
+import { CredStore } from "./credstore";
+import { EnvAccess } from "./env";
 
 const serviceInstancesEndpoint = "/v3/service_instances";
 
@@ -17,23 +17,28 @@ export enum ServiceStatus {
 
 class CloudFoundryApi {
   private _token = "";
+  private _credStore: CredStore;
+
+  constructor() {
+    this._credStore = new CredStore();
+  }
 
   /**
    * Retrieves access token for request to cloud foundry REST API
    * @returns Promise<void>
    */
-  private async _retrieveToken(): Promise<void> {
+  private async retrieveToken(): Promise<void> {
     if (this._token !== "") {
       return;
     }
     // access credentials for cf access
-    const creds = await credStore.readCredentials(
+    const creds = await this._credStore.readCredentials(
       "utils",
       "cf-api",
       "password"
     );
 
-    const vcapAppEnv = envAccess.vcapAppEnv;
+    const vcapAppEnv = EnvAccess.vcapAppEnv;
 
     const tokenResp = await axios.post<{ access_token: string }>(
       vcapAppEnv.cfApiTokenUrl,
@@ -54,13 +59,13 @@ class CloudFoundryApi {
   }
 
   async getHanaStatus(instanceGuid: string): Promise<ServiceInfo> {
-    await this._retrieveToken();
+    await this.retrieveToken();
 
     const hanaInfo = {} as ServiceInfo;
 
     try {
       const hanaSrvResp = await axios.get(
-        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
+        `${EnvAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
         {
           headers: {
             Authorization: `Bearer ${this._token}`
@@ -75,7 +80,7 @@ class CloudFoundryApi {
     }
     try {
       const hanaSrvParamsResp = await axios.get(
-        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}/parameters`,
+        `${EnvAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}/parameters`,
         {
           headers: {
             Authorization: `Bearer ${this._token}`
@@ -102,10 +107,10 @@ class CloudFoundryApi {
   }
 
   async startHana(instanceGuid: string): Promise<boolean> {
-    await this._retrieveToken();
+    await this.retrieveToken();
     try {
       const hanaSrvParamsResp = await axios.patch(
-        `${envAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
+        `${EnvAccess.vcapAppEnv.cfApiUrl}${serviceInstancesEndpoint}/${instanceGuid}`,
         {
           parameters: {
             data: {

@@ -27,7 +27,8 @@
   "scripts": {
     "postinstall": "npx husky install",
     "build": "npx -p mbt mbt build",
-    "test": "cd src && npm start",
+    "test:schedule": "cd src && npm start",
+    "test": "cd src && npm test",
     "gen:env": "cf de hana-scheduler-srv && ts-node util/generate-env.ts",
     "deploy": "cf deploy mta_archives/hana-scheduler_1.0.0.mtar --retries 0",
     "lint": "eslint . --fix"

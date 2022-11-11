@@ -67,6 +67,9 @@ export class EnvAccess {
   }
 
   private static init() {
+    if (!process.env.VCAP_SERVICES || !process.env.VCAP_APPLICATION) {
+      throw new Error("Cloud foundry environment not available!");
+    }
     const envExtract = {
       VCAP_SERVICES: JSON.parse(process.env.VCAP_SERVICES as string),
       VCAP_APPLICATION: JSON.parse(process.env.VCAP_APPLICATION as string)

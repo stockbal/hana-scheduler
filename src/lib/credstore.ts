@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from "axios";
 import { JWE, JWK } from "node-jose";
 import { CredStoreCredentials, EnvAccess } from "./env";
 
-type Credentials = {
+export type Credentials = {
   username: string;
   password: string;
 };

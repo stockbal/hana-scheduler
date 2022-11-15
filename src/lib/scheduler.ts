@@ -2,7 +2,7 @@ import { z } from "zod";
 import { CronJob, CronTime } from "cron";
 import { DateTime } from "luxon";
 import { Logger } from "./log";
-import { cfApi, ServiceStatus } from "./cf-api";
+import { CloudFoundryApi, ServiceStatus } from "./cf-api";
 
 const JobSchema = z.object({
   hanaInstanceGuid: z.string(),
@@ -14,6 +14,7 @@ type Job = z.TypeOf<typeof JobSchema>;
 
 export class HanaScheduler {
   private _jobsConfig: Job[] | undefined;
+  private _cfApi: CloudFoundryApi | undefined;
 
   constructor(jobConfigJson: string) {
     try {
@@ -33,6 +34,48 @@ export class HanaScheduler {
         Logger.error(validationError);
       }
     }
+  }
+
+  async run() {
+    if (!this._jobsConfig) {
+      return;
+    }
+
+    Logger.info(
+      `Schedule ${this._jobsConfig.length} job(s) for starting HANA instances...`
+    );
+
+    for (const jobConfig of this._jobsConfig) {
+      this.createJob(jobConfig);
+    }
+  }
+
+  private get cfApi() {
+    if (!this._cfApi) {
+      this._cfApi = new CloudFoundryApi();
+    }
+    return this._cfApi;
+  }
+
+  private createJob(jobConfig: Job) {
+    const newJob = new CronJob(
+      jobConfig.startCronTimePattern,
+      this.checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
+      null,
+      false,
+      "Europe/Berlin"
+    );
+    newJob.start();
+
+    if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
+      this.checkAndStartHana(jobConfig.hanaInstanceGuid, false);
+    }
+
+    Logger.info(
+      `Next scheduled start for HANA instance ${
+        jobConfig.hanaInstanceGuid
+      } at ${newJob.nextDate().toFormat("yyyy LLL dd, HH:mm:ssZ")}`
+    );
   }
 
   private checkForDuplicateConfigs() {
@@ -68,39 +111,6 @@ export class HanaScheduler {
     });
   }
 
-  async run() {
-    if (!this._jobsConfig) {
-      return;
-    }
-
-    Logger.info(
-      `Schedule ${this._jobsConfig.length} job(s) for starting HANA instances...`
-    );
-
-    for (const jobConfig of this._jobsConfig) {
-      this.createJob(jobConfig);
-    }
-  }
-  private createJob(jobConfig: Job) {
-    const newJob = new CronJob(
-      jobConfig.startCronTimePattern,
-      this.checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
-      null,
-      false,
-      "Europe/Berlin"
-    );
-    newJob.start();
-
-    if (!newJob.nextDate().hasSame(DateTime.now(), "day")) {
-      this.checkAndStartHana(jobConfig.hanaInstanceGuid, false);
-    }
-
-    Logger.info(
-      `Next scheduled start for HANA instance ${
-        jobConfig.hanaInstanceGuid
-      } at ${newJob.nextDate().toFormat("yyyy LLL dd, HH:mm:ssZ")}`
-    );
-  }
   /**
    * Starts a given HANA service, if not already started
    */
@@ -109,7 +119,7 @@ export class HanaScheduler {
     scheduled: boolean
   ) {
     try {
-      const hanaInfo = await cfApi.getHanaStatus(hanaInstanceGuid);
+      const hanaInfo = await this.cfApi.getHanaStatus(hanaInstanceGuid);
 
       if (scheduled) {
         Logger.info(`Check if HANA instance '${hanaInfo.name}' is running...`);
@@ -119,7 +129,7 @@ export class HanaScheduler {
         );
       }
       if (hanaInfo.status === ServiceStatus.Stopped) {
-        const isStarting = await cfApi.startHana(hanaInstanceGuid);
+        const isStarting = await this.cfApi.startHana(hanaInstanceGuid);
         if (isStarting) {
           Logger.info(`HANA instance '${hanaInfo.name}' is starting`);
         } else {

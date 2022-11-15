@@ -26,7 +26,11 @@ if (!jobScheduleJson) {
 
 if (jobScheduleJson) {
   const scheduler = new HanaScheduler(jobScheduleJson);
-  scheduler.run();
+  try {
+    scheduler.run();
+  } catch (error) {
+    Logger.error(error);
+  }
 }
 
 /**

@@ -10,13 +10,20 @@ const JobSchema = z.object({
 });
 
 const JobsSchema = JobSchema.array().nonempty();
-type Job = z.TypeOf<typeof JobSchema>;
+export type Job = z.TypeOf<typeof JobSchema>;
+
+export type JobResult = {
+  hanaInstanceGuid: string;
+  started: boolean;
+};
 
 export class HanaScheduler {
   private _jobsConfig: Job[] | undefined;
+  private _jobs: CronJob[];
   private _cfApi: CloudFoundryApi | undefined;
 
   constructor(jobConfigJson: string) {
+    this._jobs = [];
     try {
       this._jobsConfig = JobsSchema.parse(JSON.parse(jobConfigJson));
       this.checkForDuplicateConfigs();
@@ -24,29 +31,34 @@ export class HanaScheduler {
     } catch (validationError) {
       this._jobsConfig = undefined;
       if (validationError instanceof z.ZodError) {
-        Logger.error(
-          "Error in Job configuration schema",
-          (validationError as z.ZodError).issues
-        );
-      } else if (validationError instanceof Error) {
-        Logger.error(`Error: ${(validationError as Error).message}`);
+        throw new Error("Invalid job configuration schema");
       } else {
-        Logger.error(validationError);
+        throw validationError;
       }
     }
   }
 
-  async run() {
+  async run(): Promise<JobResult[]> {
     if (!this._jobsConfig) {
-      return;
+      return [];
     }
 
     Logger.info(
       `Schedule ${this._jobsConfig.length} job(s) for starting HANA instances...`
     );
 
-    for (const jobConfig of this._jobsConfig) {
-      this.createJob(jobConfig);
+    return this._jobsConfig.map(jobConfig => {
+      this._jobs.push(this.createJob(jobConfig));
+      return { hanaInstanceGuid: jobConfig.hanaInstanceGuid, started: true };
+    });
+  }
+
+  /**
+   * Stops all started cron jobs
+   */
+  teardown() {
+    for (const job of this._jobs) {
+      job.stop();
     }
   }
 
@@ -57,7 +69,7 @@ export class HanaScheduler {
     return this._cfApi;
   }
 
-  private createJob(jobConfig: Job) {
+  private createJob(jobConfig: Job): CronJob {
     const newJob = new CronJob(
       jobConfig.startCronTimePattern,
       this.checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
@@ -76,6 +88,8 @@ export class HanaScheduler {
         jobConfig.hanaInstanceGuid
       } at ${newJob.nextDate().toFormat("yyyy LLL dd, HH:mm:ssZ")}`
     );
+
+    return newJob;
   }
 
   private checkForDuplicateConfigs() {

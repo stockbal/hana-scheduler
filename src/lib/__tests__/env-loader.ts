@@ -3,7 +3,7 @@ import { privateKey } from "./encryption";
 
 const env: Env = {
   VCAP_APPLICATION: {
-    cf_api: "http://localhost:9000/cf.api"
+    cf_api: "http://cf.api.com"
   },
   VCAP_SERVICES: {
     credstore: [

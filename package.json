@@ -26,11 +26,12 @@
   },
   "scripts": {
     "postinstall": "npx husky install",
-    "build": "npx -p mbt mbt build",
+    "build:free": "npx -p mbt mbt build --mtar archive -e config/deploy/free.mtaext",
+    "build:trial": "npx -p mbt mbt build --mtar archive -e config/deploy/trial.mtaext",
     "test:schedule": "cd src && npm start",
     "test": "cd src && npm test",
     "gen:env": "cf de hana-scheduler-srv && ts-node util/generate-env.ts",
-    "deploy": "cf deploy mta_archives/hana-scheduler_1.0.0.mtar --retries 0",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 0",
     "lint": "eslint . --fix"
   },
   "commitlint": {

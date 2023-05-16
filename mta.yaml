@@ -30,7 +30,6 @@ resources:
     type: org.cloudfoundry.managed-service
     parameters:
       service: credstore
-      service-plan: free
       config:
         authentication:
           type: basic

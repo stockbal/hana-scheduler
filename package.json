@@ -32,6 +32,7 @@
     "test": "cd src && npm test",
     "gen:env": "cf de hana-scheduler-srv && ts-node util/generate-env.ts",
     "deploy": "cf deploy mta_archives/archive.mtar --retries 0",
+    "undeploy": "cf undeploy hana-scheduler --delete-service-keys --delete-service-brokers --delete-services",
     "lint": "eslint . --fix"
   },
   "commitlint": {

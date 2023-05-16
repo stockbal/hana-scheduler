@@ -1,6 +1,7 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 import { JWE, JWK } from "node-jose";
 import { CredStoreCredentials, EnvAccess } from "./env";
+import { Logger } from "./log";
 
 export type Credentials = {
   username: string;
@@ -25,15 +26,26 @@ export class CredStore {
   ): Promise<Credentials> {
     const credstoreSrvCreds = EnvAccess.credstoreEnv.credentials;
 
-    const credResp = await this.createAxios(credstoreSrvCreds).get(`/${type}`, {
-      params: { name },
-      headers: { "sapcp-credstore-namespace": namespace }
-    });
+    try {
+      const credResp = await this.createAxios(credstoreSrvCreds).get(
+        `/${type}`,
+        {
+          params: { name },
+          headers: { "sapcp-credstore-namespace": namespace }
+        }
+      );
+      return this.decryptCredential(
+        credResp.data,
+        credstoreSrvCreds.encryption.client_private_key
+      );
+    } catch (error) {
+      const cause =
+        error instanceof AxiosError ? `, {cause: ${error.message}}` : "";
 
-    return this.decryptCredential(
-      credResp.data,
-      credstoreSrvCreds.encryption.client_private_key
-    );
+      throw new Error(
+        `Retrieval of credentials for namespace: '${namespace}', name: '${name}' failed${cause}`
+      );
+    }
   }
 
   private createAxios(credentials: CredStoreCredentials): AxiosInstance {

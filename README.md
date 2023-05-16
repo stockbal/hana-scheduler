@@ -1,10 +1,23 @@
 # HANA Scheduler
 
-Simple MTA project which uses the Cloud Foundry REST API to start one or several HANA Cloud service instances via a node cron job.  
-The project is primarily designed to automate the daily start of a HANA Cloud instance that is running in a  SAP BTP trial account.
+## Introduction
 
-It works also with HANA Cloud instances of service plan `hana-free` but for these the recommended solution would be to use 
-the [Automation Pilot](https://discovery-center.cloud.sap/serviceCatalog/automation-pilot?region=all) instead.
+Simple MTA project which uses the Cloud Foundry REST API to start one or several HANA Cloud service instances via a node cron job.  
+The project is primarily designed to automate the daily start of a HANA Cloud instance that is running in a SAP BTP trial account or one that was created using the `hana-free` plan.
+
+### Replaced by Automation Pilot
+
+With the release of the [Automation Pilot](https://discovery-center.cloud.sap/serviceCatalog/automation-pilot?region=all) in trial and free tier accounts the project is now more or less obsolete 😉. It still has the advantage of running in every region. The Automation Pilot is currently only available in the following regions/hyperscalers:
+
+| Hyperscaler     | Regions                                |
+| --------------- | -------------------------------------- |
+| AWS             | Australia (Sydney), Europe (Frankfurt) |
+| Microsoft Azure | Singapure                              |
+| Google Cloud    | US Central (IA)                        |
+
+> **Note**: This means, on a trial account you have to choose region **Singapure**.
+
+Another advantage of the free Automation Pilot is the limitation of scheduled executions, which is 5 at the time of writing. This project on the other hand has no such limitation.
 
 ## Used SAP BTP services
 

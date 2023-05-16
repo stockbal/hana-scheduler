@@ -33,6 +33,8 @@ or
 
 In both cases the `JSON` configuration must be provided in the following format
 
+
+
 ```json
 [
   {

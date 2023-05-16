@@ -16,10 +16,8 @@ If the free HANA Cloud instance is running on a Free Tier account it is recommen
 
 ## Mechanism to schedule the HANA start
 
-To schedule the start of the HANA Cloud instance a simple cron job via then [cron](https://npmjs.org/cron) package is used.  
+To schedule the start of the HANA Cloud instance a simple cron job via the [cron](https://npmjs.org/cron) package is used.  
 This has the advantage of no additional costs as the [SAP Job Scheduler](https://) service is not available as free tier.
-
-Additionally as the scheduling takes place inside a node application, the scheduler checks all HANA instances if they are truly started if the initial job date lies in the future.
 
 ## Job configuration
 
@@ -31,9 +29,7 @@ or
 
 - a `JSON` file that can be deployed together with the application at path `/src/jobconfig.json`.
 
-In both cases the `JSON` configuration must be provided in the following format
-
-
+In both cases the `JSON` configuration must be provided in the following format:
 
 ```json
 [
@@ -43,6 +39,8 @@ In both cases the `JSON` configuration must be provided in the following format
   }
 ]
 ```
+
+> **Note**: The cron time will be regarded as UTC time zone.
 
 ## Deployment
 

@@ -75,7 +75,7 @@ export class HanaScheduler {
       this.checkAndStartHana.bind(this, jobConfig.hanaInstanceGuid, true),
       null,
       false,
-      "Europe/Berlin"
+      "UTC"
     );
     newJob.start();
 
